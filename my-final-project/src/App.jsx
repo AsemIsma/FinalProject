@@ -5,9 +5,10 @@ import Dish from './Dish.jsx';
 export default function App() {
   const { data, loading, error } = useFetch('https://foodster-idg1.onrender.com/api/dishes');
   const [searchInput, setSearchInput] = useState("");
-  const [searchResults, setSearchResults] = useState(null); // Initialize as null
-  const [randomResult, setRandomResult] = useState(null); // Initialize as null
-  const [activeView, setActiveView] = useState('all'); // 'all', 'search', or 'random'
+  const [searchResults, setSearchResults] = useState(null);
+  const [randomResult, setRandomResult] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState("none");
+  const [activeView, setActiveView] = useState('all'); // Initialize with 'all'
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error}</p>;
@@ -29,7 +30,7 @@ export default function App() {
     );
     setSearchResults(filtered);
     setActiveView('search');
-    setRandomResult(null); // Clear random result when searching
+    setRandomResult(null);
   };
 
   // Random
@@ -37,7 +38,23 @@ export default function App() {
     const ranDish = Math.floor(Math.random() * data.length);
     setRandomResult(data[ranDish]);
     setActiveView('random');
-    setSearchResults(null); // Clear search results when getting random
+    setSearchResults(null);
+  };
+
+  // Category
+  const handleCategoryChange = (event) => {
+    const category = event.target.value;
+    setSelectedCategory(category);
+    
+    if (category === "none") {
+      setSearchResults(null);
+      setActiveView('all');
+      return;
+    }
+    
+    const filteredDishes = data.filter(dish => dish.category === category);
+    setSearchResults(filteredDishes);
+    setActiveView('category'); // Set the view mode to 'category'
   };
 
   // Determine which dishes to display
@@ -47,8 +64,10 @@ export default function App() {
         return searchResults || [];
       case 'random':
         return randomResult ? [randomResult] : [];
+      case 'category':
+        return searchResults || []; // Return the filtered results directly
       default:
-        return []; 
+        return data || []; // Return all data by default
     }
   };
 
@@ -66,7 +85,12 @@ export default function App() {
         </form>
         <button className="random-btn" onClick={handleRandom}>random</button>
 
-        <select id="selector" name="category">
+        <select 
+          id="selector" 
+          name="category"
+          value={selectedCategory}
+          onChange={handleCategoryChange}
+        >
           <option value="none">Select category</option>
           <option value="main dish">Main dish</option>
           <option value="dessert">Dessert</option>
