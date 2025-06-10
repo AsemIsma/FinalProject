@@ -9,6 +9,8 @@ export default function App() {
   const [randomResult, setRandomResult] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("none");
   const [activeView, setActiveView] = useState('all'); // Initialize with 'all'
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(6); // Number of items per page
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error}</p>;
@@ -70,6 +72,35 @@ export default function App() {
         return []; // Return all data by default
     }
   };
+  const getPaginatedDishes = () => {
+  const allDishes = getDisplayDishes();
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  return allDishes.slice(startIndex, endIndex);
+  };
+  
+  const Pagination = () => {
+  const allDishes = getDisplayDishes();
+  const pageNumbers = [];
+  
+  for (let i = 1; i <= Math.ceil(allDishes.length / itemsPerPage); i++) {
+    pageNumbers.push(i);
+  }
+
+  return (
+    <div className="pagination">
+      {pageNumbers.map(number => (
+        <button
+          key={number}
+          onClick={() => setCurrentPage(number)}
+          className={currentPage === number ? 'active' : ''}
+        >
+          {number}
+        </button>
+      ))}
+    </div>
+  );
+};
 
   return (
     <>
@@ -98,10 +129,10 @@ export default function App() {
         </select>
       </div>
       
-      <div className="container"></div> 
-      <div className="pagination"></div>
-      
-      <Dish dishes={getDisplayDishes()} />
+      <div className="container">
+      <Dish dishes={getPaginatedDishes()} viewMode={activeView} />
+    </div>
+    {getDisplayDishes().length > itemsPerPage && <Pagination />}
     </>
   );
 }

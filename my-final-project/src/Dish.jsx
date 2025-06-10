@@ -1,6 +1,11 @@
 function Dish (props) {
     const { dishes } = props;
     console.log(dishes, "asdfghjk")
+    
+    if (!dishes || dishes.length === 0) {
+    return <p>No dishes found</p>;
+  }
+
     return (
         <>
 <div>
