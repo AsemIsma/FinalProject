@@ -1,5 +1,6 @@
 function Dish (props) {
     const { dishes } = props;
+    console.log(dishes, "asdfghjk")
     return (
         <>
          <div>
