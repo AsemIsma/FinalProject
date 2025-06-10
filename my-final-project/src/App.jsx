@@ -11,10 +11,15 @@ export default function App() {
   const [activeView, setActiveView] = useState('all'); // Initialize with 'all'
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(6); // Items per page
+  const [itemsPerPage] = useState(3); // Items per page
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error}</p>;
+
+  const handleViewChange = (newView) => {
+  setActiveView(newView);
+  setCurrentPage(1); // Always reset to first page
+};
 
   // Search
   const handleSearchInputChange = (event) => {
@@ -23,6 +28,7 @@ export default function App() {
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
+    handleViewChange('search');
     setCurrentPage(1);
     if (!searchInput.trim()) {
       setSearchResults(null);
@@ -39,6 +45,7 @@ export default function App() {
 
   // Random
   const handleRandom = () => {
+    handleViewChange('random');
     setCurrentPage(1);
     const ranDish = Math.floor(Math.random() * data.length);
     setRandomResult(data[ranDish]);
@@ -48,9 +55,10 @@ export default function App() {
 
   // Category
   const handleCategoryChange = (event) => {
+  const category = event.target.value;
+  setSelectedCategory(category);
+  handleViewChange(category === 'none' ? 'all' : 'category');
     setCurrentPage(1);
-    const category = event.target.value;
-    setSelectedCategory(category);
     
     if (category === "none") {
       setSearchResults(null);
@@ -73,16 +81,34 @@ export default function App() {
   }
 };
   
+const getAllDishes = () => {
+  switch (activeView) {
+    case 'search': return searchResults || [];
+    case 'random': return randomResult ? [randomResult] : [];
+    case 'category': return searchResults || [];
+    default: return data || [];
+  }
+};
+
+const getCurrentPageDishes = () => {
+  const allDishes = getAllDishes();
+  if (activeView === 'random') return allDishes;
+  
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  return allDishes.slice(startIndex, startIndex + itemsPerPage);
+};
+
   const getPaginatedDishes = () => {
   const allDishes = getDisplayDishes();
   const startIndex = (currentPage - 1) * itemsPerPage;
   return allDishes.slice(startIndex, startIndex + itemsPerPage);
 };
- 
- const Pagination = ({ totalItems }) => {
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  
-  if (totalPages <= 1) return null;
+
+const Pagination = () => {
+  const allDishes = getAllDishes();
+  const totalPages = Math.ceil(allDishes.length / itemsPerPage);
+
+  if (activeView === 'random' || totalPages <= 1) return null;
 
   return (
     <div className="pagination">
@@ -90,37 +116,24 @@ export default function App() {
         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
         disabled={currentPage === 1}
       >
-        &lt;
+        Previous
       </button>
       
-      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-        let pageNum;
-        if (totalPages <= 5) {
-          pageNum = i + 1;
-        } else if (currentPage <= 3) {
-          pageNum = i + 1;
-        } else if (currentPage >= totalPages - 2) {
-          pageNum = totalPages - 4 + i;
-        } else {
-          pageNum = currentPage - 2 + i;
-        }
-        
-        return (
-          <button
-            key={pageNum}
-            onClick={() => setCurrentPage(pageNum)}
-            className={currentPage === pageNum ? 'active' : ''}
-          >
-            {pageNum}
-          </button>
-        );
-      })}
+      {Array.from({ length: totalPages }, (_, i) => (
+        <button
+          key={i + 1}
+          onClick={() => setCurrentPage(i + 1)}
+          className={currentPage === i + 1 ? 'active' : ''}
+        >
+          {i + 1}
+        </button>
+      ))}
       
       <button 
         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
         disabled={currentPage === totalPages}
       >
-        &gt;
+        Next
       </button>
     </div>
   );
@@ -154,15 +167,14 @@ export default function App() {
         </select>
       </div>
       
-      <div className="container">
-      <Dish dishes={getPaginatedDishes()} viewMode={activeView} />
+       <div className="container">
+      <Dish 
+        dishes={getCurrentPageDishes()}
+        viewMode={activeView}
+      />
     </div>
     
-    {/* Only show pagination for grid views */}
-    {(activeView === 'search' || activeView === 'category' || activeView === 'all') && 
-     getDisplayDishes().length > itemsPerPage && (
-      <Pagination totalItems={getDisplayDishes().length} />
-    )}
+    <Pagination />
     </>
   );
 }

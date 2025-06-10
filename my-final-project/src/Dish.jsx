@@ -1,5 +1,6 @@
 function Dish({ dishes, viewMode }) {
   if (!dishes || dishes.length === 0) {
+    if (!dishes) return <p>Loading...</p>;
     return <p>No dishes found</p>;
   }
 
@@ -12,9 +13,9 @@ function Dish({ dishes, viewMode }) {
             <h1 className="ran search-name">{dish.dishName}</h1>
             <img className="ran img" src={dish.dishImgSrc}/>
             <p className="title">Ingredients:</p>
-            <p>{dish.dishIngredients.map(el => el.join(' ')).join('<br>')}</p>
+            <p>{dish.dishIngredients.map(el => el.join(' ')).join(', ')}</p>
             <p className="title">Preparation steps:</p>
-            <p>-{dish.dishPrepSteps.join('<br><br>-')}</p>
+            <p>-{dish.dishPrepSteps.join(',  -')}</p>
             <a className="src" href={dish.source}>Source</a>
             <p>author: {dish.author}</p>
         </div>
