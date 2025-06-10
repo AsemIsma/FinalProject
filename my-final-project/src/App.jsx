@@ -67,7 +67,7 @@ export default function App() {
       case 'category':
         return searchResults || []; // Return the filtered results directly
       default:
-        return data || []; // Return all data by default
+        return []; // Return all data by default
     }
   };
 
