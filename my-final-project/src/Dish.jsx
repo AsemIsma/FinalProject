@@ -8,7 +8,16 @@ function Dish({ dishes, viewMode }) {
     const dish = Array.isArray(dishes) ? dishes[0] : dishes;
     return (
       <div className='dish-detail'>
-        {/* Your detailed dish view */}
+        <div className="search-cont">
+            <h1 className="ran search-name">{dish.dishName}</h1>
+            <img className="ran img" src={dish.dishImgSrc}/>
+            <p className="title">Ingredients:</p>
+            <p>{dish.dishIngredients.map(el => el.join(' ')).join('<br>')}</p>
+            <p className="title">Preparation steps:</p>
+            <p>-{dish.dishPrepSteps.join('<br><br>-')}</p>
+            <a className="src" href={dish.source}>Source</a>
+            <p>author: {dish.author}</p>
+        </div>
       </div>
     );
   }
@@ -19,7 +28,8 @@ function Dish({ dishes, viewMode }) {
     <div className="dishes-grid">
       {dishes.map(dish => (
         <div key={dish.id} className="dish-card">
-          {/* Your dish card content */}
+          <p>{dish.dishName}</p>
+          <img className="img" src={dish.dishImgSrc}/>
         </div>
       ))}
     </div>
