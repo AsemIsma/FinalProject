@@ -9,8 +9,9 @@ export default function App() {
   const [randomResult, setRandomResult] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("none");
   const [activeView, setActiveView] = useState('all'); // Initialize with 'all'
+
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(6); // Number of items per page
+  const [itemsPerPage] = useState(6); // Items per page
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error}</p>;
@@ -61,46 +62,40 @@ export default function App() {
 
   // Determine which dishes to display
   const getDisplayDishes = () => {
-    switch (activeView) {
-      case 'search':
-        return searchResults || [];
-      case 'random':
-        return randomResult ? [randomResult] : [];
-      case 'category':
-        return searchResults || []; // Return the filtered results directly
-      default:
-        return []; // Return all data by default
-    }
-  };
-  const getPaginatedDishes = () => {
+  switch (activeView) {
+    case 'search': return searchResults || [];
+    case 'random': return randomResult ? [randomResult] : [];
+    case 'category': return searchResults || [];
+    default: return data || []; 
+  }
+};
+  
+  // Add this new function for paginated dishes
+const getPaginatedDishes = () => {
   const allDishes = getDisplayDishes();
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  return allDishes.slice(startIndex, endIndex);
-  };
+  return allDishes.slice(startIndex, startIndex + itemsPerPage);
+};
+ 
+  // Add this Pagination component
+const Pagination = ({ totalItems }) => {
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
   
-  const Pagination = () => {
-  const allDishes = getDisplayDishes();
-  const pageNumbers = [];
-  
-  for (let i = 1; i <= Math.ceil(allDishes.length / itemsPerPage); i++) {
-    pageNumbers.push(i);
-  }
-
   return (
     <div className="pagination">
-      {pageNumbers.map(number => (
+      {Array.from({ length: totalPages }, (_, i) => (
         <button
-          key={number}
-          onClick={() => setCurrentPage(number)}
-          className={currentPage === number ? 'active' : ''}
+          key={i + 1}
+          onClick={() => setCurrentPage(i + 1)}
+          className={currentPage === i + 1 ? 'active' : ''}
         >
-          {number}
+          {i + 1}
         </button>
       ))}
     </div>
   );
 };
+  
 
   return (
     <>
