@@ -1,4 +1,5 @@
 import { useFetch } from './useFetch';
+import Dish from './Dish.jsx'
 
 export default function App() {
   const { data, loading, error } = useFetch('https://foodster-idg1.onrender.com/api/dishes');
@@ -7,10 +8,8 @@ export default function App() {
   if (error) return <p>Error: {error}</p>;
 console.log(data);
   return (
-    <ul>
-      {data.map((dish) => (
-        <li key={dish.id}>{dish.dishName}</li>
-      ))}
-    </ul>
+    <>
+   <Dish dishes={data} />
+    </>
   );
 }
