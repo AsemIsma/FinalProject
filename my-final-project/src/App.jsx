@@ -6,6 +6,7 @@ export default function App() {
   const { data, loading, error } = useFetch('https://foodster-idg1.onrender.com/api/dishes');
   const [searchInput, setSearchInput] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  const [randomResult, setRandomResult] = useState([]);
   let result = [];
 
   if (loading) return <p>Loading...</p>;
@@ -29,6 +30,11 @@ export default function App() {
   };
 
   //Random
+  function handleRandom () {
+    const ranDish = Math.floor(Math.random() * data.length);
+    setRandomResult(data[ranDish]);
+  }
+
 
   return (
     <>
@@ -42,7 +48,7 @@ export default function App() {
           />
         <button type="submit" className="sub-btn">Search</button>
     </form>
-    <button className="random-btn">random</button>
+    <button className="random-btn" onClick={handleRandom}>random</button>
 
     <select id="selector" name="category">
         <option value="none">Select category</option>
@@ -53,9 +59,7 @@ export default function App() {
     </div>
     <div className="container"></div> 
     <div className="pagination"></div>
-      <Dish dishes={ searchResults } /> {
-        console.log(result, "158")
-      }
+      <Dish dishes={ searchResults.length > 0 ? searchResults : randomResult } /> 
     </>
   );
 }
