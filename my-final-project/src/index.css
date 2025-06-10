@@ -15,22 +15,44 @@
   margin: 5px;
 }
 
+/* Pagination */
 .pagination {
   display: flex;
   justify-content: center;
-  margin: 20px 0;
+  gap: 8px;
+  margin: 2rem 0;
+  flex-wrap: wrap;
 }
 
 .pagination button {
-  margin: 0 5px;
-  padding: 5px 10px;
+  padding: 8px 12px;
   border: 1px solid #ddd;
-  background: #fff;
+  background: white;
   cursor: pointer;
+  border-radius: 4px;
+  min-width: 40px;
+  transition: all 0.2s;
 }
 
 .pagination button.active {
-  background: #007bff;
+  background: var(--primary-color);
   color: white;
-  border-color: #007bff;
+  border-color: var(--primary-color);
+}
+
+.pagination button:hover:not(.active):not(:disabled) {
+  background: #f5f5f5;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Dishes grid */
+.dishes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  padding: 1rem;
 }

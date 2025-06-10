@@ -23,6 +23,7 @@ export default function App() {
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
+    setCurrentPage(1);
     if (!searchInput.trim()) {
       setSearchResults(null);
       setActiveView('all');
@@ -38,6 +39,7 @@ export default function App() {
 
   // Random
   const handleRandom = () => {
+    setCurrentPage(1);
     const ranDish = Math.floor(Math.random() * data.length);
     setRandomResult(data[ranDish]);
     setActiveView('random');
@@ -46,6 +48,7 @@ export default function App() {
 
   // Category
   const handleCategoryChange = (event) => {
+    setCurrentPage(1);
     const category = event.target.value;
     setSelectedCategory(category);
     
@@ -70,28 +73,55 @@ export default function App() {
   }
 };
   
-  // Add this new function for paginated dishes
-const getPaginatedDishes = () => {
+  const getPaginatedDishes = () => {
   const allDishes = getDisplayDishes();
   const startIndex = (currentPage - 1) * itemsPerPage;
   return allDishes.slice(startIndex, startIndex + itemsPerPage);
 };
  
-  // Add this Pagination component
-const Pagination = ({ totalItems }) => {
+ const Pagination = ({ totalItems }) => {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   
+  if (totalPages <= 1) return null;
+
   return (
     <div className="pagination">
-      {Array.from({ length: totalPages }, (_, i) => (
-        <button
-          key={i + 1}
-          onClick={() => setCurrentPage(i + 1)}
-          className={currentPage === i + 1 ? 'active' : ''}
-        >
-          {i + 1}
-        </button>
-      ))}
+      <button 
+        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+        disabled={currentPage === 1}
+      >
+        &lt;
+      </button>
+      
+      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+        let pageNum;
+        if (totalPages <= 5) {
+          pageNum = i + 1;
+        } else if (currentPage <= 3) {
+          pageNum = i + 1;
+        } else if (currentPage >= totalPages - 2) {
+          pageNum = totalPages - 4 + i;
+        } else {
+          pageNum = currentPage - 2 + i;
+        }
+        
+        return (
+          <button
+            key={pageNum}
+            onClick={() => setCurrentPage(pageNum)}
+            className={currentPage === pageNum ? 'active' : ''}
+          >
+            {pageNum}
+          </button>
+        );
+      })}
+      
+      <button 
+        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+        disabled={currentPage === totalPages}
+      >
+        &gt;
+      </button>
     </div>
   );
 };
@@ -127,7 +157,12 @@ const Pagination = ({ totalItems }) => {
       <div className="container">
       <Dish dishes={getPaginatedDishes()} viewMode={activeView} />
     </div>
-    {getDisplayDishes().length > itemsPerPage && <Pagination />}
+    
+    {/* Only show pagination for grid views */}
+    {(activeView === 'search' || activeView === 'category' || activeView === 'all') && 
+     getDisplayDishes().length > itemsPerPage && (
+      <Pagination totalItems={getDisplayDishes().length} />
+    )}
     </>
   );
 }
