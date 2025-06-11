@@ -28,7 +28,7 @@ function Dish({ dishes, viewMode }) {
     <>
     <div className="dishes-grid">
       {dishes.map(dish => (
-        <div key={dish.id} className="dish-card">
+        <div key={dish.id} className="dish-card" onClick={handleOnePage(dish.id)}>
           <p>{dish.dishName}</p>
           <img className="img" src={dish.dishImgSrc}/>
         </div>

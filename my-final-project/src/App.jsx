@@ -26,6 +26,12 @@ export default function App() {
     setSearchInput(event.target.value);
   };
 
+  function handleOnePage (id) {
+    handleViewChange('random');
+    setRandomResult(data[id]);
+    setSearchResults(null);
+  };
+
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     handleViewChange('search');
