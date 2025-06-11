@@ -1,5 +1,5 @@
 import { useFetch } from './useFetch';
-import { useState } from 'react';
+import { useState, useReducer } from 'react';
 import Dish from './Dish.jsx';
 
 export default function App() {
@@ -14,6 +14,44 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(3); // Items per page
 
+  const dishSelectionReducer = (state, action) => {
+  switch (action.type) {
+    case 'SEARCH':
+      return {
+        view: 'search',
+        dishes: action.payload || []
+      };
+    case 'RANDOM':
+      return {
+        view: 'random',
+        dishes: action.payload ? [action.payload] : []
+      };
+    case 'CATEGORY':
+      return {
+        view: 'category',
+        dishes: action.payload || []
+      };
+    case 'DETAIL':
+      return {
+        view: 'detail',
+        dishes: action.payload ? [action.payload] : []
+      };
+    case 'RESET':
+      return {
+        view: 'all',
+        dishes: action.payload || []
+      };
+    default:
+      return state;
+  }
+};
+
+// Initialize with your existing activeView and data
+const [dishState, dispatchDishes] = useReducer(dishSelectionReducer, {
+  view: 'all',
+  dishes: data || []
+});
+
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error}</p>;
 
@@ -22,80 +60,47 @@ export default function App() {
   setCurrentPage(1); // Always reset to first page
 };
 
-  // Search
-  const handleSearchInputChange = (event) => {
-    setSearchInput(event.target.value);
-  };
-
-  const handleDishClick = (dishId) => {
-  const dish = data.find(d => d.id === dishId);
-  setSelectedDish(dish);
-  setActiveView('detail');
+// Search
+const handleSearchSubmit = (e) => {
+  e.preventDefault();
+  if (!searchInput.trim()) {
+    dispatchDishes({ type: 'RESET', payload: data });
+    return;
+  }
+  const filtered = data.filter(dish => 
+    dish.dishName.toLowerCase().includes(searchInput.toLowerCase())
+  );
+  dispatchDishes({ type: 'SEARCH', payload: filtered });
 };
 
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    handleViewChange('search');
-    setCurrentPage(1);
-    if (!searchInput.trim()) {
-      setSearchResults(null);
-      setActiveView('all');
-      return;
-    }
-    const filtered = data.filter(dish => 
-      dish.dishName.toLowerCase().includes(searchInput.toLowerCase())
-    );
-    setSearchResults(filtered);
-    setActiveView('search');
-    setRandomResult(null);
-  };
+// Random
+const handleRandom = () => {
+  const ranDish = Math.floor(Math.random() * data.length);
+  dispatchDishes({ type: 'RANDOM', payload: data[ranDish] });
+};
 
-  // Random
-  const handleRandom = () => {
-    handleViewChange('random');
-    setCurrentPage(1);
-    const ranDish = Math.floor(Math.random() * data.length);
-    setRandomResult(data[ranDish]);
-    setActiveView('random');
-    setSearchResults(null);
-  };
-
-  // Category
-  const handleCategoryChange = (event) => {
+// Category
+const handleCategoryChange = (event) => {
   const category = event.target.value;
   setSelectedCategory(category);
-  handleViewChange(category === 'none' ? 'all' : 'category');
-    setCurrentPage(1);
-    
-    if (category === "none") {
-      setSearchResults(null);
-      setActiveView('all');
-      return;
-    }
-    
-    const filteredDishes = data.filter(dish => dish.category === category);
-    setSearchResults(filteredDishes);
-    setActiveView('category'); // Set the view mode to 'category'
-  };
-
-  // Determine which dishes to display
-//   const getDisplayDishes = () => {
-//   switch (activeView) {
-//     case 'search': return searchResults || [];
-//     case 'random': return randomResult ? [randomResult] : [];
-//     case 'category': return searchResults || [];
-//     default: return data || []; 
-//   }
-// };
   
-const getAllDishes = () => {
-  switch (activeView) {
-    case 'search': return searchResults || [];
-    case 'random': return randomResult ? [randomResult] : [];
-    case 'category': return searchResults || [];
-    default: return data || [];
+  if (category === "none") {
+    dispatchDishes({ type: 'RESET', payload: data });
+    return;
   }
+  
+  const filteredDishes = data.filter(dish => dish.category === category);
+  dispatchDishes({ type: 'CATEGORY', payload: filteredDishes });
 };
+
+// Dish Click
+const handleDishClick = (dishId) => {
+  const dish = data.find(d => d.id === dishId);
+  dispatchDishes({ type: 'DETAIL', payload: dish });
+};
+
+  
+const getAllDishes = () => dishState.dishes;
 
 const getCurrentPageDishes = () => {
   if (activeView === 'detail' && selectedDish) return [selectedDish];
@@ -108,12 +113,6 @@ const getCurrentPageDishes = () => {
   );
 };
 
-
-//   const getPaginatedDishes = () => {
-//   const allDishes = getDisplayDishes();
-//   const startIndex = (currentPage - 1) * itemsPerPage;
-//   return allDishes.slice(startIndex, startIndex + itemsPerPage);
-// };
 
 const Pagination = () => {
   const allDishes = getAllDishes();
@@ -178,18 +177,17 @@ const Pagination = () => {
         </select>
       </div>
       
-    <div className="container">
-      <Dish 
-        dishes={getCurrentPageDishes()}
-        viewMode={activeView}
-        onDishClick={handleDishClick}
-      />
-    </div>
-    
-    {activeView !== 'detail' && activeView !== 'random' && 
-     getAllDishes().length > itemsPerPage && (
-      <Pagination />
-       )}
+    <Dish 
+  dishes={getAllDishes()} 
+  viewMode={dishState.view} 
+  onDishClick={handleDishClick}
+/>
+
+// Pagination condition
+{dishState.view !== 'random' && dishState.view !== 'detail' && 
+ getAllDishes().length > itemsPerPage && (
+  <Pagination />
+)}
     </>
   );
 }
