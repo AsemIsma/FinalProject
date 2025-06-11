@@ -8,6 +8,20 @@ img{
   height: 300px;
 }
 
+.back-button {
+  margin-top: 20px;
+  padding: 8px 16px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.back-button:hover {
+  opacity: 0.9;
+}
+
 .dish-card{
   border: solid 1px black;
   display: inline-block;

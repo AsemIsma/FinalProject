@@ -36,6 +36,12 @@ const dishReducer = (state, action) => {
         filteredDishes: state.allDishes,
         view: 'all'
       };
+    case 'SHOW_DETAIL':
+      return {
+        ...state,
+        filteredDishes: [action.payload],
+        view: 'detail'
+      };
     default:
       return state;
   }
@@ -98,6 +104,14 @@ export default function App() {
     dispatch({ type: 'FILTER_CATEGORY', payload: filtered });
   };
 
+  const handleDishClick = (dish) => {
+  dispatch({ 
+    type: 'SHOW_DETAIL', 
+    payload: dish 
+  });
+  setCurrentPage(1);
+};
+
   // Get current dishes for pagination
   const getCurrentDishes = () => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -135,9 +149,10 @@ export default function App() {
 
       <div className="container">
         <Dish 
-          dishes={getCurrentDishes()} 
-          viewMode={dishState.view} 
-        />
+        dishes={getCurrentDishes()}
+        viewMode={dishState.view}
+        onDishClick={handleDishClick}  // Add this prop
+      />
       </div>
 
       {dishState.view !== 'random' && dishState.filteredDishes.length > itemsPerPage && (
