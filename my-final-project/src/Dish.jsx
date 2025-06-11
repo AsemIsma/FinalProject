@@ -1,41 +1,49 @@
-function Dish({ dishes, viewMode }) {
-  if (!dishes || dishes.length === 0) {
-    if (!dishes) return <p>Loading...</p>;
-    return <p>No dishes found</p>;
-  }
+function Dish({ dishes, viewMode, onDishClick }) {
+  if (!dishes || dishes.length === 0) return <p>No dishes found</p>;
 
-  // Handle single dish view (random)
-  if (viewMode === 'random' || !Array.isArray(dishes)) {
+  // Detailed view
+  if (viewMode === 'detail' || viewMode === 'random' || !Array.isArray(dishes)) {
     const dish = Array.isArray(dishes) ? dishes[0] : dishes;
     return (
-      <div className='dish-detail'>
-        <div className="search-cont">
-            <h1 className="ran search-name">{dish.dishName}</h1>
-            <img className="ran img" src={dish.dishImgSrc}/>
-            <p className="title">Ingredients:</p>
-            <p>{dish.dishIngredients.map(el => el.join(' ')).join(', ')}</p>
-            <p className="title">Preparation steps:</p>
-            <p>-{dish.dishPrepSteps.join(',  -')}</p>
-            <a className="src" href={dish.source}>Source</a>
-            <p>author: {dish.author}</p>
+      <div className="dish-detail">
+        <h1>{dish.dishName}</h1>
+        <img src={dish.dishImgSrc} alt={dish.dishName} />
+        <div className="ingredients">
+          <h3>Ingredients:</h3>
+          <ul>
+            {dish.dishIngredients.map((ingredient, i) => (
+              <li key={i}>{ingredient.join(' ')}</li>
+            ))}
+          </ul>
         </div>
+        <div className="instructions">
+          <h3>Instructions:</h3>
+          <ol>
+            {dish.dishPrepSteps.map((step, i) => (
+              <li key={i}>{step}</li>
+            ))}
+          </ol>
+        </div>
+        <a href={dish.source} className="source-link">View Source</a>
       </div>
     );
   }
 
-  // Handle grid view
+  // Grid view
   return (
-    <>
     <div className="dishes-grid">
       {dishes.map(dish => (
-        <div key={dish.id} className="dish-card" onClick={handleOnePage(dish.id)}>
-          <p>{dish.dishName}</p>
-          <img className="img" src={dish.dishImgSrc}/>
+        <div 
+          key={dish.id} 
+          className="dish-card"
+          onClick={() => onDishClick(dish.id)}
+        >
+          <h3>{dish.dishName}</h3>
+          <img src={dish.dishImgSrc} alt={dish.dishName} />
         </div>
       ))}
     </div>
-        </>
-    )
+  );
 }
 
 export default Dish;
