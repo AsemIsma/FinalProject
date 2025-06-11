@@ -14,42 +14,47 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(3); // Items per page
 
-  const dishSelectionReducer = (state, action) => {
+const dishSelectionReducer = (state, action) => {
   switch (action.type) {
+    case 'SET_DATA':
+      return {
+        ...state,
+        allDishes: action.payload,
+        currentDishes: action.payload
+      };
     case 'SEARCH':
       return {
+        ...state,
         view: 'search',
-        dishes: action.payload || []
+        currentDishes: action.payload || []
       };
     case 'RANDOM':
       return {
+        ...state,
         view: 'random',
-        dishes: action.payload ? [action.payload] : []
+        currentDishes: action.payload ? [action.payload] : []
       };
     case 'CATEGORY':
       return {
+        ...state,
         view: 'category',
-        dishes: action.payload || []
-      };
-    case 'DETAIL':
-      return {
-        view: 'detail',
-        dishes: action.payload ? [action.payload] : []
+        currentDishes: action.payload || []
       };
     case 'RESET':
       return {
+        ...state,
         view: 'all',
-        dishes: action.payload || []
+        currentDishes: state.allDishes
       };
     default:
       return state;
   }
 };
 
-// Initialize with your existing activeView and data
 const [dishState, dispatchDishes] = useReducer(dishSelectionReducer, {
   view: 'all',
-  dishes: data || []
+  allDishes: data || [],
+  currentDishes: data || []
 });
 
   if (loading) return <p>Loading...</p>;
@@ -60,11 +65,16 @@ const [dishState, dispatchDishes] = useReducer(dishSelectionReducer, {
   setCurrentPage(1); // Always reset to first page
 };
 
-// Search
+useEffect(() => {
+  if (data) {
+    dispatchDishes({ type: 'SET_DATA', payload: data });
+  }
+}, [data]);
+
 const handleSearchSubmit = (e) => {
   e.preventDefault();
   if (!searchInput.trim()) {
-    dispatchDishes({ type: 'RESET', payload: data });
+    dispatchDishes({ type: 'RESET' });
     return;
   }
   const filtered = data.filter(dish => 
@@ -73,25 +83,24 @@ const handleSearchSubmit = (e) => {
   dispatchDishes({ type: 'SEARCH', payload: filtered });
 };
 
-// Random
 const handleRandom = () => {
   const ranDish = Math.floor(Math.random() * data.length);
   dispatchDishes({ type: 'RANDOM', payload: data[ranDish] });
 };
 
-// Category
 const handleCategoryChange = (event) => {
   const category = event.target.value;
   setSelectedCategory(category);
   
   if (category === "none") {
-    dispatchDishes({ type: 'RESET', payload: data });
+    dispatchDishes({ type: 'RESET' });
     return;
   }
   
   const filteredDishes = data.filter(dish => dish.category === category);
   dispatchDishes({ type: 'CATEGORY', payload: filteredDishes });
 };
+
 
 // Dish Click
 const handleDishClick = (dishId) => {
@@ -103,14 +112,8 @@ const handleDishClick = (dishId) => {
 const getAllDishes = () => dishState.dishes;
 
 const getCurrentPageDishes = () => {
-  if (activeView === 'detail' && selectedDish) return [selectedDish];
-  if (activeView === 'random') return randomResult ? [randomResult] : [];
-  
-  const allDishes = getAllDishes();
-  return allDishes.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  return dishState.currentDishes.slice(startIndex, startIndex + itemsPerPage);
 };
 
 
