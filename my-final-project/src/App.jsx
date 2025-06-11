@@ -1,196 +1,160 @@
 import { useFetch } from './useFetch';
-import { useState, useReducer } from 'react';
+import { useState, useEffect, useReducer } from 'react';
 import Dish from './Dish.jsx';
 
-export default function App() {
-  const { data, loading, error } = useFetch('https://foodster-idg1.onrender.com/api/dishes');
-  const [searchInput, setSearchInput] = useState("");
-  const [searchResults, setSearchResults] = useState(null);
-  const [randomResult, setRandomResult] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState("none");
-  const [activeView, setActiveView] = useState('all'); // Initialize with 'all'
-  const [selectedDish, setSelectedDish] = useState(null);
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(3); // Items per page
-
-const dishSelectionReducer = (state, action) => {
+// Reducer for dish state management
+const dishReducer = (state, action) => {
   switch (action.type) {
     case 'SET_DATA':
       return {
         ...state,
         allDishes: action.payload,
-        currentDishes: action.payload
+        filteredDishes: action.payload,
+        view: 'all'
       };
     case 'SEARCH':
       return {
         ...state,
-        view: 'search',
-        currentDishes: action.payload || []
+        filteredDishes: action.payload,
+        view: 'search'
       };
     case 'RANDOM':
       return {
         ...state,
-        view: 'random',
-        currentDishes: action.payload ? [action.payload] : []
+        filteredDishes: [action.payload],
+        view: 'random'
       };
-    case 'CATEGORY':
+    case 'FILTER_CATEGORY':
       return {
         ...state,
-        view: 'category',
-        currentDishes: action.payload || []
+        filteredDishes: action.payload,
+        view: 'category'
       };
     case 'RESET':
       return {
         ...state,
-        view: 'all',
-        currentDishes: state.allDishes
+        filteredDishes: state.allDishes,
+        view: 'all'
       };
     default:
       return state;
   }
 };
 
-const [dishState, dispatchDishes] = useReducer(dishSelectionReducer, {
-  view: 'all',
-  allDishes: data || [],
-  currentDishes: data || []
-});
+export default function App() {
+  const { data, loading, error } = useFetch('https://foodster-idg1.onrender.com/api/dishes');
+  const [dishState, dispatch] = useReducer(dishReducer, {
+    allDishes: [],
+    filteredDishes: [],
+    view: 'all'
+  });
+  const [searchInput, setSearchInput] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("none");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error}</p>;
+  // Initialize data
+  useEffect(() => {
+    if (data) {
+      dispatch({ type: 'SET_DATA', payload: data });
+    }
+  }, [data]);
 
-  const handleViewChange = (newView) => {
-  setActiveView(newView);
-  setCurrentPage(1); // Always reset to first page
-};
+  // Search handler
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    setCurrentPage(1);
+    
+    if (!searchInput.trim()) {
+      dispatch({ type: 'RESET' });
+      return;
+    }
 
-useEffect(() => {
-  if (data) {
-    dispatchDishes({ type: 'SET_DATA', payload: data });
-  }
-}, [data]);
+    const filtered = dishState.allDishes.filter(dish =>
+      dish.dishName.toLowerCase().includes(searchInput.toLowerCase())
+    );
+    dispatch({ type: 'SEARCH', payload: filtered });
+  };
 
-const handleSearchSubmit = (e) => {
-  e.preventDefault();
-  if (!searchInput.trim()) {
-    dispatchDishes({ type: 'RESET' });
-    return;
-  }
-  const filtered = data.filter(dish => 
-    dish.dishName.toLowerCase().includes(searchInput.toLowerCase())
-  );
-  dispatchDishes({ type: 'SEARCH', payload: filtered });
-};
+  // Random handler
+  const handleRandom = () => {
+    setCurrentPage(1);
+    const randomIndex = Math.floor(Math.random() * dishState.allDishes.length);
+    dispatch({ type: 'RANDOM', payload: dishState.allDishes[randomIndex] });
+  };
 
-const handleRandom = () => {
-  const ranDish = Math.floor(Math.random() * data.length);
-  dispatchDishes({ type: 'RANDOM', payload: data[ranDish] });
-};
+  // Category handler
+  const handleCategoryChange = (e) => {
+    setCurrentPage(1);
+    const category = e.target.value;
+    setSelectedCategory(category);
 
-const handleCategoryChange = (event) => {
-  const category = event.target.value;
-  setSelectedCategory(category);
-  
-  if (category === "none") {
-    dispatchDishes({ type: 'RESET' });
-    return;
-  }
-  
-  const filteredDishes = data.filter(dish => dish.category === category);
-  dispatchDishes({ type: 'CATEGORY', payload: filteredDishes });
-};
+    if (category === "none") {
+      dispatch({ type: 'RESET' });
+      return;
+    }
 
+    const filtered = dishState.allDishes.filter(dish => dish.category === category);
+    dispatch({ type: 'FILTER_CATEGORY', payload: filtered });
+  };
 
-// Dish Click
-const handleDishClick = (dishId) => {
-  const dish = data.find(d => d.id === dishId);
-  dispatchDishes({ type: 'DETAIL', payload: dish });
-};
+  // Get current dishes for pagination
+  const getCurrentDishes = () => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return dishState.filteredDishes.slice(startIndex, startIndex + itemsPerPage);
+  };
 
-  
-const getAllDishes = () => dishState.dishes;
-
-const getCurrentPageDishes = () => {
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  return dishState.currentDishes.slice(startIndex, startIndex + itemsPerPage);
-};
-
-
-const Pagination = () => {
-  const allDishes = getAllDishes();
-  const totalPages = Math.ceil(allDishes.length / itemsPerPage);
-
-  if (activeView === 'random' || totalPages <= 1) return null;
+  if (loading) return <div className="loading">Loading...</div>;
+  if (error) return <div className="error">Error: {error.message}</div>;
 
   return (
-    <div className="pagination">
-      <button 
-        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-        disabled={currentPage === 1}
-      >
-        Previous
-      </button>
-      
-      {Array.from({ length: totalPages }, (_, i) => (
-        <button
-          key={i + 1}
-          onClick={() => setCurrentPage(i + 1)}
-          className={currentPage === i + 1 ? 'active' : ''}
-        >
-          {i + 1}
-        </button>
-      ))}
-      
-      <button 
-        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-        disabled={currentPage === totalPages}
-      >
-        Next
-      </button>
-    </div>
-  );
-};
-  
-
-  return (
-    <>
+    <div className="app">
       <div className="searchbar-cont">
         <form onSubmit={handleSearchSubmit}>
-          <input 
+          <input
             type="text"
             value={searchInput}
-            onChange={handleSearchInputChange}
+            onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search dishes..."
           />
-          <button type="submit" className="sub-btn">Search</button>
+          <button type="submit">Search</button>
         </form>
-        <button className="random-btn" onClick={handleRandom}>random</button>
-
-        <select 
-          id="selector" 
-          name="category"
+        
+        <button onClick={handleRandom}>Random</button>
+        
+        <select
           value={selectedCategory}
           onChange={handleCategoryChange}
         >
-          <option value="none">Select category</option>
-          <option value="main dish">Main dish</option>
-          <option value="dessert">Dessert</option>
-          <option value="snack">Snack</option>
+          <option value="none">All Categories</option>
+          <option value="main dish">Main Dishes</option>
+          <option value="dessert">Desserts</option>
+          <option value="snack">Snacks</option>
         </select>
       </div>
-      
-    <Dish 
-  dishes={getAllDishes()} 
-  viewMode={dishState.view} 
-  onDishClick={handleDishClick}
-/>
 
-// Pagination condition
-{dishState.view !== 'random' && dishState.view !== 'detail' && 
- getAllDishes().length > itemsPerPage && (
-  <Pagination />
-)}
-    </>
+      <div className="container">
+        <Dish 
+          dishes={getCurrentDishes()} 
+          viewMode={dishState.view} 
+        />
+      </div>
+
+      {dishState.view !== 'random' && dishState.filteredDishes.length > itemsPerPage && (
+        <div className="pagination">
+          {Array.from({ 
+            length: Math.ceil(dishState.filteredDishes.length / itemsPerPage) 
+          }, (_, i) => (
+            <button
+              key={i + 1}
+              onClick={() => setCurrentPage(i + 1)}
+              className={currentPage === i + 1 ? 'active' : ''}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
